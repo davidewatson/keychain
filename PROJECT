@@ -1,3 +1,7 @@
 domain: k8s.facebook.com
 repo: github.com/davidewatson/keychain
+resources:
+- group: aqueduct
+  kind: KeychainSecret
+  version: v1
 version: "2"
