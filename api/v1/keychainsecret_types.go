@@ -17,25 +17,54 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run "make" to regenerate code after modifying this file
+
+// For kubebuilder marker syntax see:
+// https://book.kubebuilder.io/reference/markers/crd-validation.html
 
 // KeychainSecretSpec defines the desired state of KeychainSecret
 type KeychainSecretSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of KeychainSecret. Edit KeychainSecret_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Name is the name of the Keychain secret.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=150
+	// +kubebuilder:validation:Pattern="^[A-Z0-9_]+$"
+	Name string `json:"name,required"`
+	// Group is the name of the Keychain group the secret exist in. It is optional as not all secrets exit in a group.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=150
+	// +kubebuilder:validation:Pattern="^[A-Z0-9_]+$"
+	// +optional
+	Group string `json:"group,omitempty"`
+	// TTL is how often this secret should be updated (for rotation purposes).
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:default="24h"
+	// +optional
+	TTL string `json:"ttl,omitempty"`
 }
 
 // KeychainSecretStatus defines the observed state of KeychainSecret
 type KeychainSecretStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// SecretRef is a reference to the Secret this KeychainSecret created and maintains.
+	// +optional
+	SecretRef corev1.SecretReference `json:"secretRef,omitempty"`
+	// LastUpdate is the time we updated this secret.
+	// It is a fixed, portable, seriallized version of the golang type https://golang.org/pkg/time/#Time
+	// +optional
+	LastUpdate metav1.Time `json:"lastUpdate,omitempty" protobuf:"bytes,3,opt,name=lastUpdate"`
+	// Message is human-readable string indicating details about the last update.
+	// +optional
+	Message string `json:"message,omitempty" protobuf:"bytes,6,opt,name=message"`
+	// Reason is a brief CamelCase string that describes any failure and is meant
+	// for machine parsing and tidy display in the CLI.
+	// +optional
+	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
 }
 
 // +kubebuilder:object:root=true
