@@ -37,6 +37,7 @@ type KeychainSecretReconciler struct {
 // +kubebuilder:rbac:groups=aqueduct.k8s.facebook.com,resources=keychainsecrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=aqueduct.k8s.facebook.com,resources=keychainsecrets/status,verbs=get;update;patch
 
+// Reconcile is called when a watched resource needs to be reconciled.
 func (r *KeychainSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	_ = context.Background()
 	_ = r.Log.WithValues("keychainsecret", req.NamespacedName)
@@ -46,6 +47,7 @@ func (r *KeychainSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 	return ctrl.Result{}, nil
 }
 
+// SetupWithManager sets up the controller with manager.
 func (r *KeychainSecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&aqueductv1.KeychainSecret{}).
