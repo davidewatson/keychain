@@ -41,9 +41,12 @@ type KeychainSecretSpec struct {
 	// +kubebuilder:validation:Pattern="^[A-Z0-9_]+$"
 	// +optional
 	Group string `json:"group,omitempty"`
-	// TTL is how often this secret should be updated (for rotation purposes).
+	// TTL is how often this secret should be updated (for rotation purposes). It is a golang Duration, and we use a
+	// regex to validate it. Note that only seconds (s), minutes (m), or hours (h) are allowed because durations
+	// involving days or years may be ambiguous due to differences in locales. See https://github.com/golang/go/issues/17767
+	// for the "official" rational...
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Format=duration
+	// +kubebuilder:validation:Pattern="^[0-9]+[smh]$"
 	// +kubebuilder:default="24h"
 	// +optional
 	TTL string `json:"ttl,omitempty"`
