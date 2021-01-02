@@ -28,6 +28,16 @@ spec:
         args:
         - --enable-leader-election
         image: controller:latest
+        env:
+        - name: CONTROLLER_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CERT_GENERATION_COMMAND
+          value: "openssl req -x509 -newkey {{.Algorithm}} -days {{.Days}} -nodes -subj {{.Subject}}"
+        # https://stackoverflow.com/questions/59002949/how-to-create-a-json-web-token-jwt-using-openssl-shell-commands
+        - name: TOKEN_GENERATION_COMMAND
+          value: "openssl dgst -sha256 -mac HMAC -macopt hexkey:{{.HexSecret}} -binary | base64 | sed s/\+/-/g | sed 's/\//_/g' | sed -E s/=+$//"
         name: manager
         resources:
           limits:
