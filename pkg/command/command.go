@@ -19,7 +19,10 @@ package command
 import (
 	"context"
 	"log"
+	"os"
 	"os/exec"
+	"strings"
+	"text/template"
 	"time"
 )
 
@@ -64,3 +67,69 @@ func RunCommand(ctx context.Context, command Command) ([]byte, error) {
 
 	return output, nil
 }
+
+// ProvisionServiceIdentityParams is used when templating ProvisionServiceIdentity commands
+type ProvisionServiceIdentityParams struct {
+	Algorithm string
+	Days      int
+	Subject   string
+}
+
+// ProvisionServiceIdentity shells out to create a certificate and returns it
+func ProvisionServiceIdentity(ctx context.Context, params ProvisionServiceIdentityParams) ([]byte, error) {
+	var buf strings.Builder
+
+	tmpl := os.Getenv("GENERATE_CERT_COMMAND")
+	t := template.Must(template.New("GetServiceIdentity").Parse(tmpl))
+	t.Execute(&buf, params)
+
+	cert, err := RunCommand(ctx, Command{Command: buf.String()})
+	if err != nil {
+		return nil, err
+	}
+	return cert, nil
+}
+
+// GetKeychainSecretParams is used when templating GetKeychainSecret commands
+type GetKeychainSecretParams struct {
+	Name  string
+	Group string
+}
+
+// GetKeychainSecret shells out to get a Keychain secret and returns it
+func GetKeychainSecret(ctx context.Context, params GetKeychainSecretParams) ([]byte, error) {
+	var buf strings.Builder
+
+	tmpl := os.Getenv("GET_SECRET_COMMAND")
+	t := template.Must(template.New("GetServiceIdentity").Parse(tmpl))
+	t.Execute(&buf, params)
+
+	cert, err := RunCommand(ctx, Command{Command: buf.String()})
+	if err != nil {
+		return nil, err
+	}
+	return cert, nil
+}
+
+/*
+// GetCertificateData reads filename from disk and returns a base64 encoded string
+// https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/
+//env:
+//- name: SSL_CERT_FILE
+//  value: /etc/pki/tls/certs/thefacebook-ca-bundle.crt
+func GetCertificateData(filename string) (map[string][]byte, error) {
+	var secretData map[string][]byte
+
+	envFilename := os.Getenv("KEYCHAIN_CERT")
+	if envFilename != "" {
+		filename = envFilename
+	}
+
+	_, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return secretData, err
+	}
+
+	return secretData, nil
+}
+*/
