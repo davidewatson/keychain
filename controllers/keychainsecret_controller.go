@@ -29,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	aqueductv1 "github.com/davidewatson/keychain/api/v1"
-	"github.com/davidewatson/keychain/pkg/command"
 )
 
 const ()
@@ -94,7 +93,7 @@ func (r *KeychainSecretReconciler) CreateSecretFromKeychain(ctx context.Context,
 	}
 
 	// Get the keychain secret
-	secret, err := command.GetKeychainSecret(ctx, command.GetKeychainSecretParams{
+	secret, err := GetKeychainSecret(ctx, GetKeychainSecretParams{
 		Group: keychainSecret.Spec.Group,
 		Name:  keychainSecret.Spec.Name,
 	})
@@ -156,7 +155,7 @@ func (r *KeychainSecretReconciler) GetOrCreateIdentity(ctx context.Context, keyc
 		}
 
 		// We need to create an identity
-		cert, err := command.ProvisionServiceIdentity(ctx, command.ProvisionServiceIdentityParams{
+		cert, err := ProvisionServiceIdentity(ctx, ProvisionServiceIdentityParams{
 			Algorithm: "rsa:4096",
 			Days:      365,
 			Subject:   "'/CN=judkins.house/O=Facebook/C=US'",
