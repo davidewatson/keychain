@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -26,25 +27,30 @@ import (
 	"time"
 )
 
+const (
+	defaultTimeout = 5 * time.Minute
+)
+
 // Command encapsulates a command to run.
 type Command struct {
-	Command string   // Name of command (relative or absolute)
-	Args    []string // Slice of arguments for command
-	Timeout int      // Number of seconds before process times out
+	Command string        // Name of command (relative or absolute)
+	Args    []string      // Slice of arguments for command
+	Timeout time.Duration // Number of seconds before process times out
 }
 
 // RunCommand runs command with arguments and a timeout. If the timeout expires
 // context.DeadlineExceeded is returned. If there is no err, then stdout is
 // return.
 func RunCommand(ctx context.Context, command Command) ([]byte, error) {
-	absPath, err := exec.LookPath(command.Command)
+	absPath := command.Command
+	/*absPath, err := exec.LookPath(command.Command)
 	if err != nil {
 		log.Printf("didn't find %s executable", command.Command)
 		return nil, err
-	}
+	}*/
 
 	// We use the context for the timeout and kill process functionality...
-	newCtx, cancel := context.WithTimeout(ctx, time.Duration(command.Timeout)*time.Second)
+	newCtx, cancel := context.WithTimeout(ctx, command.Timeout)
 	defer cancel()
 
 	// TODO: Create the command with our context
@@ -80,10 +86,16 @@ func ProvisionServiceIdentity(ctx context.Context, params ProvisionServiceIdenti
 	var buf strings.Builder
 
 	tmpl := os.Getenv("GENERATE_CERT_COMMAND")
+	fmt.Printf("tmpl %v\n", tmpl)
 	t := template.Must(template.New("GetServiceIdentity").Parse(tmpl))
 	t.Execute(&buf, params)
 
-	cert, err := RunCommand(ctx, Command{Command: buf.String()})
+	fields := strings.Fields(buf.String())
+	fmt.Printf("%v\n", fields)
+	command := fields[0]
+	args := fields[1:]
+
+	cert, err := RunCommand(ctx, Command{Command: command, Args: args, Timeout: defaultTimeout})
 	if err != nil {
 		return nil, err
 	}
@@ -101,10 +113,16 @@ func GetKeychainSecret(ctx context.Context, params GetKeychainSecretParams) ([]b
 	var buf strings.Builder
 
 	tmpl := os.Getenv("GET_SECRET_COMMAND")
+	fmt.Printf("tmpl %v\n", tmpl)
 	t := template.Must(template.New("GetServiceIdentity").Parse(tmpl))
 	t.Execute(&buf, params)
 
-	cert, err := RunCommand(ctx, Command{Command: buf.String()})
+	fields := strings.Fields(buf.String())
+	fmt.Printf("%v\n", fields)
+	command := fields[0]
+	args := fields[1:]
+
+	cert, err := RunCommand(ctx, Command{Command: command, Args: args, Timeout: defaultTimeout})
 	if err != nil {
 		return nil, err
 	}

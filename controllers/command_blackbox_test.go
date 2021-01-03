@@ -21,8 +21,13 @@ import (
 	"os/exec"
 	"reflect"
 	"testing"
+	"time"
 
 	. "github.com/davidewatson/keychain/controllers"
+)
+
+const (
+	defaultTimeout = 10 * time.Second
 )
 
 func TestRunCommand(t *testing.T) {
@@ -30,13 +35,13 @@ func TestRunCommand(t *testing.T) {
 		name    string
 		command string
 		args    []string
-		timeout int
+		timeout time.Duration
 		err     error
 	}{
-		{name: "relative paths work", command: "ls", args: nil, timeout: 1, err: nil},
-		{name: "absolute paths work", command: "/bin/ls", args: nil, timeout: 1, err: nil},
-		{name: "errors are propagated", command: "false", args: nil, timeout: 1, err: &exec.ExitError{}},
-		{name: "timeouts kill", command: "sleep", args: []string{"1"}, timeout: 0, err: context.DeadlineExceeded},
+		{name: "relative paths work", command: "ls", args: nil, timeout: time.Second, err: nil},
+		{name: "absolute paths work", command: "/bin/ls", args: nil, timeout: time.Second, err: nil},
+		{name: "errors are propagated", command: "false", args: nil, timeout: time.Second, err: &exec.ExitError{}},
+		{name: "timeouts kill", command: "sleep", args: []string{"1"}, timeout: 0 * time.Second, err: context.DeadlineExceeded},
 	}
 
 	for _, tt := range testsTable {

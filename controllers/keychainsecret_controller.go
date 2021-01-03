@@ -28,10 +28,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	//types "apimachinery/pkg/types"
+
 	aqueductv1 "github.com/davidewatson/keychain/api/v1"
 )
 
-const ()
+const (
+	retryAfterErrorDuration = time.Minute
+)
 
 // KeychainSecretReconciler reconciles a KeychainSecret object
 type KeychainSecretReconciler struct {
@@ -42,6 +46,7 @@ type KeychainSecretReconciler struct {
 
 // +kubebuilder:rbac:groups=aqueduct.k8s.facebook.com,resources=keychainsecrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=aqueduct.k8s.facebook.com,resources=keychainsecrets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is called when a watched resource needs to be reconciled.
 func (r *KeychainSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
@@ -61,12 +66,12 @@ func (r *KeychainSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 
 	identity, err := r.GetOrCreateIdentity(ctx, keychainSecret)
 	if err != nil {
-		panic("TODO: Implement core admission controller to fail on Namespace creation instead of panicking here...")
+		return ctrl.Result{RequeueAfter: retryAfterErrorDuration}, err
 	}
 
 	_, err = r.CreateSecretFromKeychain(ctx, identity, keychainSecret)
 	if err != nil {
-		return ctrl.Result{RequeueAfter: 5 * time.Minute}, err
+		return ctrl.Result{RequeueAfter: retryAfterErrorDuration}, err
 	}
 
 	duration, err := time.ParseDuration(keychainSecret.Spec.TTL)
@@ -81,7 +86,7 @@ func (r *KeychainSecretReconciler) Reconcile(req ctrl.Request) (ctrl.Result, err
 func (r *KeychainSecretReconciler) CreateSecretFromKeychain(ctx context.Context, identitySecret *corev1.Secret, keychainSecret aqueductv1.KeychainSecret) (*corev1.Secret, error) {
 	newSecret := &corev1.Secret{}
 
-	log := r.Log.WithValues("CreateSecretFromKeychain") //, req.NamespacedName)
+	log := r.Log.WithValues("CreateSecretFromKeychain") //, types.NamespacedName{Namespace: n, Name: n})
 
 	// Get current Secret, if any.
 	originalSecret := &corev1.Secret{}
@@ -102,7 +107,10 @@ func (r *KeychainSecretReconciler) CreateSecretFromKeychain(ctx context.Context,
 	}
 	data := map[string][]byte{keychainSecret.Spec.Name: secret}
 
-	duration, _ := time.ParseDuration(keychainSecret.Spec.TTL)
+	duration, err := time.ParseDuration(keychainSecret.Spec.TTL)
+	if err != nil {
+		panic("TTL was not a valid Duration. This should have been caught during validation!?")
+	}
 
 	// Either we need to create the secret, or we need to refresh it.
 	if originalSecret == nil {

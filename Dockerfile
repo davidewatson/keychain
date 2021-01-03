@@ -25,6 +25,7 @@ RUN dnf -y install openssl
 
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER nonroot:nonroot
+#USER nonroot:nonroot
+USER root:root
 
 ENTRYPOINT ["/manager"]
