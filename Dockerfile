@@ -19,7 +19,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager 
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM centos8.3.2011
+
+RUN dnf -y install openssl
+
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER nonroot:nonroot
